@@ -3,6 +3,7 @@ package cloudsupport
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/kubescape/k8s-interface/k8sinterface"
 	"github.com/kubescape/k8s-interface/workloadinterface"
@@ -112,7 +113,17 @@ func (ApiServerInfo *ApiServerInfo) SetProvider(provider string) {
 func (apiServerInfo *ApiServerInfo) SetApiServerVersion(version *version.Info) {
 	apiServerInfo.Data = version
 	apiServerInfo.SetName(apiServerInfoVersionName)
-	// TODO: Parse the gitVersion and set the provider
+	
+	if version != nil && version.GitVersion != "" {
+		gitVersion := strings.ToLower(version.GitVersion)
+		if strings.Contains(gitVersion, "eks") {
+			apiServerInfo.SetProvider("eks")
+		} else if strings.Contains(gitVersion, "gke") {
+			apiServerInfo.SetProvider("gke")
+		} else if strings.Contains(gitVersion, "aks") {
+			apiServerInfo.SetProvider("aks")
+		}
+	}
 }
 
 func NewApiServerInfo() *ApiServerInfo {
