@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	cloudsupportv1 "github.com/kubescape/k8s-interface/cloudsupport/v1"
 	"github.com/kubescape/k8s-interface/k8sinterface"
 	"github.com/kubescape/k8s-interface/workloadinterface"
 	"k8s.io/apimachinery/pkg/version"
@@ -113,15 +114,14 @@ func (ApiServerInfo *ApiServerInfo) SetProvider(provider string) {
 func (apiServerInfo *ApiServerInfo) SetApiServerVersion(version *version.Info) {
 	apiServerInfo.Data = version
 	apiServerInfo.SetName(apiServerInfoVersionName)
-	
+	apiServerInfo.SetProvider("")
+
 	if version != nil && version.GitVersion != "" {
 		gitVersion := strings.ToLower(version.GitVersion)
-		if strings.Contains(gitVersion, "eks") {
-			apiServerInfo.SetProvider("eks")
-		} else if strings.Contains(gitVersion, "gke") {
-			apiServerInfo.SetProvider("gke")
-		} else if strings.Contains(gitVersion, "aks") {
-			apiServerInfo.SetProvider("aks")
+		if strings.Contains(gitVersion, "-eks-") {
+			apiServerInfo.SetProvider(cloudsupportv1.EKS)
+		} else if strings.Contains(gitVersion, "-gke-") {
+			apiServerInfo.SetProvider(cloudsupportv1.GKE)
 		}
 	}
 }
