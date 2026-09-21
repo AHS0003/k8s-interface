@@ -489,3 +489,42 @@ func GetPolicyVersionAKS(aksSupport IAKSSupport, cluster string, subscriptionId 
 
 	return listPolicyInfo, nil
 }
+
+// GetPolicyVersionGKE returns the IAM mappings for the GCP project.
+func GetPolicyVersionGKE(gkeSupport IGKESupport, cluster string, project string, region string) (*CloudProviderPolicyVersion, error) {
+	// get cluster describe just to get cluster name
+	clusterDescribe, err := gkeSupport.GetClusterDescribe(cluster, region, project)
+	if err != nil {
+		return nil, err
+	}
+
+	roleMappings, saMappings, err := gkeSupport.GetIAMMappings(project)
+	if err != nil {
+		return nil, err
+	}
+	
+	listPolicyVersion := map[string]interface{}{
+		"roles":           roleMappings,
+		"serviceAccounts": saMappings,
+	}
+
+	resultInBytes, err := json.Marshal(listPolicyVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	// set listEntitiesForPoliciesInfo object
+	listPolicyInfo := &CloudProviderPolicyVersion{}
+	listPolicyInfo.SetApiVersion(k8sinterface.JoinGroupVersion(apis.ApiVersionGKE, Version))
+	listPolicyInfo.SetName(gkeSupport.GetName(clusterDescribe))
+	listPolicyInfo.SetProvider(GKE)
+	listPolicyInfo.SetKind(apis.CloudProviderPolicyVersionKind)
+
+	data := map[string]interface{}{}
+	if err := json.Unmarshal(resultInBytes, &data); err != nil {
+		return nil, err
+	}
+	listPolicyInfo.SetData(data)
+
+	return listPolicyInfo, nil
+}
