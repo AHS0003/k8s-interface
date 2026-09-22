@@ -106,6 +106,19 @@ func TestGetPolicyVersionGKE(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotEmpty(t, policy)
 
+	bindings := policy.([]interface{})
+	firstBinding := bindings[0].(map[string]interface{})
+	assert.Equal(t, "roles/viewer", firstBinding["role"])
+	members := firstBinding["members"].([]interface{})
+	assert.Contains(t, members, "user:test@example.com")
+
+	secondBinding := bindings[1].(map[string]interface{})
+	assert.Equal(t, "roles/editor", secondBinding["role"])
+	secondMembers := secondBinding["members"].([]interface{})
+	assert.Contains(t, secondMembers, "serviceAccount:test-sa@project.iam.gserviceaccount.com")
+	condition := secondBinding["condition"].(map[string]interface{})
+	assert.Equal(t, "expires_end_of_2024", condition["title"])
+	assert.Equal(t, "request.time < timestamp('2025-01-01T00:00:00Z')", condition["expression"])
 	_, err = GetPolicyVersionGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
 	assert.NoError(t, err)
 	assert.Equal(t, "kubescape-demo-02", g.ClusterName)
@@ -164,6 +177,20 @@ func TestGetListEntitiesForPoliciesGKE(t *testing.T) {
 	if assert.True(t, ok) {
 		assert.Equal(t, float64(3), policy["version"])
 		assert.NotEmpty(t, policy["bindings"])
+
+		bindings := policy["bindings"].([]interface{})
+		firstBinding := bindings[0].(map[string]interface{})
+		assert.Equal(t, "roles/viewer", firstBinding["role"])
+		members := firstBinding["members"].([]interface{})
+		assert.Contains(t, members, "user:test@example.com")
+
+		secondBinding := bindings[1].(map[string]interface{})
+		assert.Equal(t, "roles/editor", secondBinding["role"])
+		secondMembers := secondBinding["members"].([]interface{})
+		assert.Contains(t, secondMembers, "serviceAccount:test-sa@project.iam.gserviceaccount.com")
+		condition := secondBinding["condition"].(map[string]interface{})
+		assert.Equal(t, "expires_end_of_2024", condition["title"])
+		assert.Equal(t, "request.time < timestamp('2025-01-01T00:00:00Z')", condition["expression"])
 	}
 
 	_, err = GetListEntitiesForPoliciesGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
