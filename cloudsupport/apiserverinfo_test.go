@@ -29,6 +29,13 @@ func TestSetApiServerVersion(t *testing.T) {
 			expectedProvider: cloudsupportv1.GKE,
 		},
 		{
+			name: "AKS version",
+			version: &version.Info{
+				GitVersion: "v1.22.11-aks-1234",
+			},
+			expectedProvider: cloudsupportv1.AKS,
+		},
+		{
 			name: "Vanilla version (AKS)",
 			version: &version.Info{
 				GitVersion: "v1.22.11",
