@@ -18,10 +18,12 @@ func NewGKESupportMock() *GKESupportMock {
 }
 
 type GKESupportMock struct {
+	ClusterName string
 }
 
 // Get descriptive info about cluster running in GKE.
 func (gkeSupportM *GKESupportMock) GetClusterDescribe(cluster string, region string, project string) (*containerpb.Cluster, error) {
+	gkeSupportM.ClusterName = cluster
 	c := &containerpb.Cluster{}
 	err := json.Unmarshal([]byte(mockobjects.GkeDescriptor), c)
 	return c, err

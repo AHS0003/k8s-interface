@@ -209,6 +209,10 @@ func GetDescribeRepositoriesEKS(eksSupport IEKSSupport, cluster string, region s
 }
 
 func GetDescribeRepositoriesGKE(gkeSupport IGKESupport, cluster string, project string, region string) (*CloudProviderDescribeRepositories, error) {
+	normalizedCluster := gkeSupport.GetContextName(cluster)
+	if normalizedCluster != "" {
+		cluster = normalizedCluster
+	}
 	clusterDescribe, err := gkeSupport.GetClusterDescribe(cluster, region, project)
 	if err != nil {
 		return nil, err
@@ -292,6 +296,10 @@ func GetDescribeRepositoriesAKS(aksSupport IAKSSupport, cluster string, subscrip
 }
 
 func GetListEntitiesForPoliciesGKE(gkeSupport IGKESupport, cluster string, project string, region string) (*CloudProviderListEntitiesForPolicies, error) {
+	normalizedCluster := gkeSupport.GetContextName(cluster)
+	if normalizedCluster != "" {
+		cluster = normalizedCluster
+	}
 	// GetClusterDescribe accepts the un-normalized zone-region which is valid for that API
 	clusterDescribe, err := gkeSupport.GetClusterDescribe(cluster, region, project)
 	if err != nil {
@@ -361,6 +369,9 @@ func GetClusterDescribeEKS(eksSupport IEKSSupport, cluster string, region string
 // Get descriptive info about cluster running in GKE.
 func GetClusterDescribeGKE(gkeSupport IGKESupport, clusterName string, region string, project string) (*CloudProviderDescribe, error) {
 	cluster := gkeSupport.GetContextName(clusterName)
+	if cluster == "" {
+		cluster = clusterName
+	}
 	clusterDescribe, err := gkeSupport.GetClusterDescribe(cluster, region, project)
 	if err != nil {
 		return nil, err
@@ -492,23 +503,22 @@ func GetPolicyVersionAKS(aksSupport IAKSSupport, cluster string, subscriptionId 
 
 // GetPolicyVersionGKE returns the IAM mappings for the GCP project.
 func GetPolicyVersionGKE(gkeSupport IGKESupport, cluster string, project string, region string) (*CloudProviderPolicyVersion, error) {
+	normalizedCluster := gkeSupport.GetContextName(cluster)
+	if normalizedCluster != "" {
+		cluster = normalizedCluster
+	}
 	// get cluster describe just to get cluster name
 	clusterDescribe, err := gkeSupport.GetClusterDescribe(cluster, region, project)
 	if err != nil {
 		return nil, err
 	}
 
-	roleMappings, saMappings, err := gkeSupport.GetIAMMappings(project)
+	policy, err := gkeSupport.GetListEntitiesForPolicies(project)
 	if err != nil {
 		return nil, err
 	}
-	
-	listPolicyVersion := map[string]interface{}{
-		"roles":           roleMappings,
-		"serviceAccounts": saMappings,
-	}
 
-	resultInBytes, err := json.Marshal(listPolicyVersion)
+	resultInBytes, err := json.Marshal(policy)
 	if err != nil {
 		return nil, err
 	}
