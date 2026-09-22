@@ -239,8 +239,19 @@ func GetPolicyVersionFromCloudProvider(cluster string, cloudProvider string) (wo
 			return nil, fmt.Errorf("%w: %v", ErrCloudDescribeUnavailable, err)
 		}
 	case cloudsupportv1.GKE:
-		//TODO - implement GKE support
-		return nil, fmt.Errorf(cloudsupportv1.NotSupportedMsg)
+		gkeSupport := cloudsupportv1.NewGKESupport()
+		project, err := gkeSupport.GetProject(cluster)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrCloudDescribeUnavailable, err)
+		}
+		region, err := gkeSupport.GetRegion(cluster)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrCloudDescribeUnavailable, err)
+		}
+		policyVersion, err = cloudsupportv1.GetPolicyVersionGKE(gkeSupport, cluster, project, region)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrCloudDescribeUnavailable, err)
+		}
 	case cloudsupportv1.AKS:
 		aksSupport := cloudsupportv1.NewAKSSupport()
 		subscriptionID, err := aksSupport.GetSubscriptionID()

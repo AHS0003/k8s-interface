@@ -42,11 +42,16 @@ func TestGetClusterDescribeGKE(t *testing.T) {
 	g := NewGKESupportMock()
 	des, err := GetClusterDescribeGKE(g, "kubescape-demo-01", "", "")
 	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-01", g.ClusterName)
 	assert.Equal(t, apis.CloudProviderDescribeKind, des.GetKind())
 	assert.Equal(t, "container.googleapis.com/v1/ClusterDescribe/kubescape-demo-01", des.GetID())
 	assert.Equal(t, k8sinterface.JoinGroupVersion(apis.ApiVersionGKE, Version), des.GetApiVersion())
 	assert.Equal(t, "kubescape-demo-01", des.GetName())
 	assert.Equal(t, 34, len(des.GetData()))
+
+	_, err = GetClusterDescribeGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-02", g.ClusterName)
 }
 
 func TestGetClusterDescribeEKS(t *testing.T) {
@@ -84,6 +89,39 @@ func TestGetPolicyVersionEKS(t *testing.T) {
 	assert.Equal(t, k8sinterface.JoinGroupVersion(apis.ApiVersionEKS, Version), repos.GetApiVersion())
 	assert.Equal(t, "ca-terraform-eks-dev-stage", repos.GetName())
 	assert.Equal(t, TypeCloudProviderPolicyVersion, repos.GetObjectType())
+}
+
+func TestGetPolicyVersionGKE(t *testing.T) {
+	g := NewGKESupportMock()
+	repos, err := GetPolicyVersionGKE(g, "kubescape-demo-01", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-01", g.ClusterName)
+	assert.Equal(t, apis.CloudProviderPolicyVersionKind, repos.GetKind())
+	assert.Equal(t, "container.googleapis.com/v1/PolicyVersion/kubescape-demo-01", repos.GetID())
+	assert.Equal(t, k8sinterface.JoinGroupVersion(apis.ApiVersionGKE, Version), repos.GetApiVersion())
+	assert.Equal(t, "kubescape-demo-01", repos.GetName())
+	assert.Equal(t, TypeCloudProviderPolicyVersion, repos.GetObjectType())
+
+	policy, ok := repos.GetData()["bindings"]
+	assert.True(t, ok)
+	assert.NotEmpty(t, policy)
+
+	bindings := policy.([]interface{})
+	firstBinding := bindings[0].(map[string]interface{})
+	assert.Equal(t, "roles/viewer", firstBinding["role"])
+	members := firstBinding["members"].([]interface{})
+	assert.Contains(t, members, "user:test@example.com")
+
+	secondBinding := bindings[1].(map[string]interface{})
+	assert.Equal(t, "roles/editor", secondBinding["role"])
+	secondMembers := secondBinding["members"].([]interface{})
+	assert.Contains(t, secondMembers, "serviceAccount:test-sa@project.iam.gserviceaccount.com")
+	condition := secondBinding["condition"].(map[string]interface{})
+	assert.Equal(t, "expires_end_of_2024", condition["title"])
+	assert.Equal(t, "request.time < timestamp('2025-01-01T00:00:00Z')", condition["expression"])
+	_, err = GetPolicyVersionGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-02", g.ClusterName)
 }
 
 func TestSetApiVersionGetPolicyVersion(t *testing.T) {
@@ -129,6 +167,7 @@ func TestGetListEntitiesForPoliciesGKE(t *testing.T) {
 	g := NewGKESupportMock()
 	repos, err := GetListEntitiesForPoliciesGKE(g, "kubescape-demo-01", "", "")
 	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-01", g.ClusterName)
 	assert.Equal(t, apis.CloudProviderListEntitiesForPoliciesKind, repos.GetKind())
 	assert.Equal(t, "container.googleapis.com/v1/ListEntitiesForPolicies/kubescape-demo-01", repos.GetID())
 	assert.Equal(t, k8sinterface.JoinGroupVersion(apis.ApiVersionGKE, Version), repos.GetApiVersion())
@@ -138,7 +177,25 @@ func TestGetListEntitiesForPoliciesGKE(t *testing.T) {
 	if assert.True(t, ok) {
 		assert.Equal(t, float64(3), policy["version"])
 		assert.NotEmpty(t, policy["bindings"])
+
+		bindings := policy["bindings"].([]interface{})
+		firstBinding := bindings[0].(map[string]interface{})
+		assert.Equal(t, "roles/viewer", firstBinding["role"])
+		members := firstBinding["members"].([]interface{})
+		assert.Contains(t, members, "user:test@example.com")
+
+		secondBinding := bindings[1].(map[string]interface{})
+		assert.Equal(t, "roles/editor", secondBinding["role"])
+		secondMembers := secondBinding["members"].([]interface{})
+		assert.Contains(t, secondMembers, "serviceAccount:test-sa@project.iam.gserviceaccount.com")
+		condition := secondBinding["condition"].(map[string]interface{})
+		assert.Equal(t, "expires_end_of_2024", condition["title"])
+		assert.Equal(t, "request.time < timestamp('2025-01-01T00:00:00Z')", condition["expression"])
 	}
+
+	_, err = GetListEntitiesForPoliciesGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-02", g.ClusterName)
 }
 
 func TestGetListEntitiesForPoliciesAKS(t *testing.T) {
@@ -209,6 +266,7 @@ func TestGetDescribeRepositoriesGKE(t *testing.T) {
 	g := NewGKESupportMock()
 	repos, err := GetDescribeRepositoriesGKE(g, "kubescape-demo-01", "", "")
 	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-01", g.ClusterName)
 	assert.Equal(t, apis.CloudProviderDescribeRepositoriesKind, repos.GetKind())
 	assert.Equal(t, "container.googleapis.com/v1/DescribeRepositories/kubescape-demo-01", repos.GetID())
 	assert.Equal(t, k8sinterface.JoinGroupVersion(apis.ApiVersionGKE, Version), repos.GetApiVersion())
@@ -221,6 +279,10 @@ func TestGetDescribeRepositoriesGKE(t *testing.T) {
 	assert.Equal(t, "DOCKER", first["format"])                   // not float64(1)
 	assert.Equal(t, "2023-11-14T22:13:20Z", first["createTime"]) // not {"seconds":...}
 	assert.NotContains(t, first, "FormatConfig")
+
+	_, err = GetDescribeRepositoriesGKE(g, "gke_project_us-central1_kubescape-demo-02", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "kubescape-demo-02", g.ClusterName)
 }
 
 type gkeSupportMockEmpty struct {

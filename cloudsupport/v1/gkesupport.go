@@ -181,7 +181,7 @@ func (gkeSupport *GKESupport) GetAuthorizationKey() (string, error) {
 func (gkeSupport *GKESupport) GetContextName(cluster string) string {
 
 	parsedName := strings.Split(cluster, "_")
-	if len(parsedName) < 3 {
+	if len(parsedName) != 4 {
 		return ""
 	}
 	clusterName := parsedName[3]
@@ -190,7 +190,7 @@ func (gkeSupport *GKESupport) GetContextName(cluster string) string {
 	}
 	cluster = k8sinterface.GetContextName()
 	parsedName = strings.Split(cluster, "_")
-	if len(parsedName) < 3 {
+	if len(parsedName) != 4 {
 		return ""
 	}
 	return parsedName[3]

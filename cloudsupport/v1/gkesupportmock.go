@@ -18,10 +18,12 @@ func NewGKESupportMock() *GKESupportMock {
 }
 
 type GKESupportMock struct {
+	ClusterName string
 }
 
 // Get descriptive info about cluster running in GKE.
 func (gkeSupportM *GKESupportMock) GetClusterDescribe(cluster string, region string, project string) (*containerpb.Cluster, error) {
+	gkeSupportM.ClusterName = cluster
 	c := &containerpb.Cluster{}
 	err := json.Unmarshal([]byte(mockobjects.GkeDescriptor), c)
 	return c, err
@@ -41,7 +43,7 @@ func (gkeSupportM *GKESupportMock) GetRegion(cluster string) (string, error) {
 
 func (gkeSupportM *GKESupportMock) GetContextName(cluster string) string {
 	parsedName := strings.Split(cluster, "_")
-	if len(parsedName) < 3 {
+	if len(parsedName) != 4 {
 		return ""
 	}
 	clusterName := parsedName[3]
@@ -50,7 +52,7 @@ func (gkeSupportM *GKESupportMock) GetContextName(cluster string) string {
 	}
 	cluster = k8sinterface.GetContextName()
 	parsedName = strings.Split(cluster, "_")
-	if len(parsedName) < 3 {
+	if len(parsedName) != 4 {
 		return ""
 	}
 	return parsedName[3]
@@ -73,10 +75,12 @@ func (gkeSupportM *GKESupportMock) GetListEntitiesForPolicies(project string) (*
 		Version: 3,
 		Bindings: []*cloudresourcemanager.Binding{
 			{
-				Role: "roles/viewer",
+				Role:    "roles/viewer",
+				Members: []string{"user:test@example.com"},
 			},
 			{
-				Role: "roles/editor",
+				Role:    "roles/editor",
+				Members: []string{"serviceAccount:test-sa@project.iam.gserviceaccount.com"},
 				Condition: &cloudresourcemanager.Expr{
 					Expression: "request.time < timestamp('2025-01-01T00:00:00Z')",
 					Title:      "expires_end_of_2024",
