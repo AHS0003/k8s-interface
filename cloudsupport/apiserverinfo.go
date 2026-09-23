@@ -122,7 +122,7 @@ func (apiServerInfo *ApiServerInfo) SetApiServerVersion(version *version.Info) {
 			apiServerInfo.SetProvider(cloudsupportv1.EKS)
 		} else if strings.Contains(gitVersion, "-gke.") {
 			apiServerInfo.SetProvider(cloudsupportv1.GKE)
-		} else if strings.Contains(gitVersion, "-aks-") {
+		} else if strings.Contains(gitVersion, "-akslts") {
 			apiServerInfo.SetProvider(cloudsupportv1.AKS)
 		}
 	}
